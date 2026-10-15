@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Book Tracker</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --danger: #ef4444;
+      --danger-hover: #dc2626;
+      --status-toread: #fef3c7;
+      --status-toread-text: #92400e;
+      --status-reading: #dbeafe;
+      --status-reading-text: #1e40af;
+      --status-finished: #dcfce7;
+      --status-finished-text: #166534;
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 1.5rem 1rem;
+    }
+
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    header {
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    header p {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-top: 0.25rem;
+    }
+
+    /* Stats bar */
+    .stats-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-badge {
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 0.35rem 0.75rem;
+      border-radius: 9999px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      margin-bottom: 1.5rem;
+    }
+
+    /* Form */
+    .form-group {
+      margin-bottom: 1rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+      color: var(--text);
+    }
+
+    .form-group input,
+    .form-group select,
+    .search-input {
+      padding: 0.65rem 0.85rem;
+      font-size: 0.95rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .search-input:focus {
+      border-color: var(--primary);
+    }
+
+    .error-msg {
+      color: var(--danger);
+      font-size: 0.8rem;
+      margin-top: 0.35rem;
+      display: none;
+    }
+
+    .error-msg.visible {
+      display: block;
+    }
+
+    button.btn-primary {
+      width: 100%;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 0.75rem;
+      border-radius: var(--radius);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    button.btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    /* Search */
+    .search-box {
+      margin-bottom: 1.25rem;
+    }
+
+    .search-input {
+      width: 100%;
+    }
+
+    /* Book list */
+    .book-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .book-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    }
+
+    @media (min-width: 500px) {
+      .book-item {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+      }
+    }
+
+    .book-info h3 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .book-info p {
+      font-size: 0.875rem;
+      color: var(--muted);
+      margin-top: 0.15rem;
+    }
+
+    .book-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .status-select {
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 0.35rem 0.5rem;
+      border-radius: var(--radius);
+      border: 1px solid transparent;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .status-To-read {
+      background-color: var(--status-toread);
+      color: var(--status-toread-text);
+      border-color: #fde68a;
+    }
+
+    .status-Reading {
+      background-color: var(--status-reading);
+      color: var(--status-reading-text);
+      border-color: #bfdbfe;
+    }
+
+    .status-Finished {
+      background-color: var(--status-finished);
+      color: var(--status-finished-text);
+      border-color: #bbf7d0;
+    }
+
+    .btn-delete {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 0.35rem 0.6rem;
+      font-size: 0.8rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-delete:hover {
+      background: #fee2e2;
+      border-color: #fca5a5;
+      color: var(--danger);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Book Tracker</h1>
+      <p>Keep track of your reading list and progress</p>
+    </header>
+
+    <!-- Dynamic Counts -->
+    <div class="stats-bar" id="statsBar">
+      <span class="stat-badge" id="statTotal">Total: 0</span>
+      <span class="stat-badge" id="statToRead">To read: 0</span>
+      <span class="stat-badge" id="statReading">Reading: 0</span>
+      <span class="stat-badge" id="statFinished">Finished: 0</span>
+    </div>
+
+    <!-- Add Book Form -->
+    <div class="card">
+      <form id="bookForm" novalidate>
+        <div class="form-group">
+          <label for="bookTitle">Title</label>
+          <input type="text" id="bookTitle" placeholder="e.g. Aadujeevitham" autocomplete="off" />
+          <div class="error-msg" id="titleError">Please enter a title</div>
+        </div>
+
+        <div class="form-group">
+          <label for="bookAuthor">Author</label>
+          <input type="text" id="bookAuthor" placeholder="e.g. Benyamin" autocomplete="off" />
+          <div class="error-msg" id="authorError">Please enter an author</div>
+        </div>
+
+        <div class="form-group">
+          <label for="bookStatus">Status</label>
+          <select id="bookStatus">
+            <option value="To read">To read</option>
+            <option value="Reading">Reading</option>
+            <option value="Finished">Finished</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn-primary">Add Book</button>
+      </form>
+    </div>
+
+    <!-- Search Input -->
+    <div class="search-box">
+      <input type="text" id="searchInput" class="search-input" placeholder="Search by title or author..." />
+    </div>
+
+    <!-- Book List -->
+    <div class="book-list" id="bookList"></div>
+  </div>
+
+  <script>
+    // State initialization
+    const STORAGE_KEY = "book_tracker_items";
+    let books = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+
+    // DOM Elements
+    const bookForm = document.getElementById("bookForm");
+    const titleInput = document.getElementById("bookTitle");
+    const authorInput = document.getElementById("bookAuthor");
+    const statusInput = document.getElementById("bookStatus");
+    const titleError = document.getElementById("titleError");
+    const authorError = document.getElementById("authorError");
+    const searchInput = document.getElementById("searchInput");
+    const bookList = document.getElementById("bookList");
+
+    const statTotal = document.getElementById("statTotal");
+    const statToRead = document.getElementById("statToRead");
+    const statReading = document.getElementById("statReading");
+    const statFinished = document.getElementById("statFinished");
+
+    // Save to LocalStorage
+    function saveBooks() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
+    }
+
+    // Update Counts
+    function updateStats() {
+      statTotal.textContent = `Total: ${books.length}`;
+      statToRead.textContent = `To read: ${books.filter((b) => b.status === "To read").length}`;
+      statReading.textContent = `Reading: ${books.filter((b) => b.status === "Reading").length}`;
+      statFinished.textContent = `Finished: ${books.filter((b) => b.status === "Finished").length}`;
+    }
+
+    // Helper: Normalize class name for status
+    function getStatusClass(status) {
+      return `status-${status.replace(/\s+/g, "-")}`;
+    }
+
+    // Render list (filtered by search query, newest first)
+    function renderBooks() {
+      const query = searchInput.value.trim().toLowerCase();
+      bookList.innerHTML = "";
+
+      const filtered = books.filter(
+        (b) =>
+          b.title.toLowerCase().includes(query) ||
+          b.author.toLowerCase().includes(query)
+      );
+
+      if (filtered.length === 0) {
+        bookList.innerHTML = `<div class="empty-state">No books found.</div>`;
+        updateStats();
+        return;
+      }
+
+      filtered.forEach((book) => {
+        const item = document.createElement("div");
+        item.className = "book-item";
+
+        item.innerHTML = `
+          <div class="book-info">
+            <h3>${escapeHtml(book.title)}</h3>
+            <p>by ${escapeHtml(book.author)}</p>
+          </div>
+          <div class="book-actions">
+            <select class="status-select ${getStatusClass(book.status)}" data-id="${book.id}">
+              <option value="To read" ${book.status === "To read" ? "selected" : ""}>To read</option>
+              <option value="Reading" ${book.status === "Reading" ? "selected" : ""}>Reading</option>
+              <option value="Finished" ${book.status === "Finished" ? "selected" : ""}>Finished</option>
+            </select>
+            <button class="btn-delete" data-id="${book.id}">Delete</button>
+          </div>
+        `;
+
+        bookList.appendChild(item);
+      });
+
+      updateStats();
+    }
+
+    // Sanitize user inputs against XSS
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // Form submission
+    bookForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const title = titleInput.value.trim();
+      const author = authorInput.value.trim();
+      const status = statusInput.value;
+
+      let isValid = true;
+
+      if (!title) {
+        titleError.classList.add("visible");
+        isValid = false;
+      } else {
+        titleError.classList.remove("visible");
+      }
+
+      if (!author) {
+        authorError.classList.add("visible");
+        isValid = false;
+      } else {
+        authorError.classList.remove("visible");
+      }
+
+      if (!isValid) return;
+
+      const newBook = {
+        id: Date.now().toString(),
+        title,
+        author,
+        status,
+        createdAt: new Date().toISOString()
+      };
+
+      // Add to front (newest first)
+      books.unshift(newBook);
+      saveBooks();
+
+      // Reset form
+      titleInput.value = "";
+      authorInput.value = "";
+      statusInput.value = "To read";
+
+      renderBooks();
+    });
+
+    // Handle Status Change and Deletion
+    bookList.addEventListener("change", (e) => {
+      if (e.target.classList.contains("status-select")) {
+        const id = e.target.getAttribute("data-id");
+        const newStatus = e.target.value;
+        const book = books.find((b) => b.id === id);
+        if (book) {
+          book.status = newStatus;
+          saveBooks();
+          e.target.className = `status-select ${getStatusClass(newStatus)}`;
+          updateStats();
+        }
+      }
+    });
+
+    bookList.addEventListener("click", (e) => {
+      if (e.target.classList.contains("btn-delete")) {
+        const id = e.target.getAttribute("data-id");
+        books = books.filter((b) => b.id !== id);
+        saveBooks();
+        renderBooks();
+      }
+    });
+
+    // Real-time Search
+    searchInput.addEventListener("input", renderBooks);
+
+    // Initial render
+    renderBooks();
+  </script>
+</body>
+</html>
